@@ -1,8 +1,10 @@
 #include <types.h>
+#include <string.h>
+#include <printk.h>
 
 struct mpconf;
 
-struct mpfp {
+struct mpstruct {
   u8 sig[4];                // "_MP_"
   struct mpconf *physaddr;
   u8 length;                // 1
@@ -53,19 +55,39 @@ struct mpioapic {
 #define MPIOINTR  0x03
 #define MPLINTR   0x04
 
-
-static struct mpfp *_mpsearch(u32 a, int len)
+static u8 mpchecksum(void *addr, int len)
 {
+    int i, sum;
+
+    for (i = sum = 0; i < len; i++)
+        sum += ((u8*)addr)[i];
+
+    return sum;
 }
 
-static struct mpfp *mpsearch()
+static struct mpstruct *_mpsearch(u32 addr, int len)
 {
-    struct mpfp *fp;
+    struct mpstruct *p, *e;
+
+    p = (struct mpstruct *)addr;
+    e = (struct mpstruct *)(addr+len);
+
+    for (; p < e; p++) {
+        if (memcmp(p->sig, "_MP_", 4) == 0 && mpchecksum(p, sizeof(struct mpstruct)) == 0)
+            return p;
+    }
+
+    return nullptr;
+}
+
+static struct mpstruct *mpsearch()
+{
+    struct mpstruct *fp;
     u32 p1;
     u32 p2;
 
     p1 = (u32)(*(u16*)0x040e) << 4;
-    p2 = (u32)(*(u16*)0x0413) * 1024;
+    p2 = (u32)(*(u16*)0x0413) << 10;
 
     if ((fp = _mpsearch(p1 ?: p2-1024, 1024)))
         return fp;
@@ -75,6 +97,8 @@ static struct mpfp *mpsearch()
 
 void mpinit()
 {
-    struct mpfp *fp;
+    struct mpstruct *fp;
+
     fp = mpsearch();
+    printk("fp = %p\n", fp);
 }

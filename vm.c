@@ -54,7 +54,5 @@ void kvminit()
     maprange((void*)IOSPACE,    IOSPACE,    IOLENGTH,               PTE_W | PTE_P);
     maprange((void*)DEVSPACE,   DEVSPACE,   DEVLENGTH,              PTE_W | PTE_P);
 
-    mappage((void*)0, 0, 0);
-
     lcr3(V2P(pagedir));
 }
