@@ -1,9 +1,13 @@
+#include <layout.h>
+
 struct freepage
 {
     struct freepage *next;
 };
 
 struct freepage *freelist;
+
+extern char kend[];
 
 void *kalloc()
 {
@@ -28,7 +32,7 @@ void freerange(void *vstart, void *vend)
         kfree(p);
 }
 
-void mminit1(void *vstart, void *vend)
+void mminit1()
 {
-    freerange(vstart, vend);
+    freerange(kend, (void*)(KVADDR + 0x400000));
 }

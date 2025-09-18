@@ -1,4 +1,6 @@
 #include <layout.h>
+#include <x86asm.h>
+#include <string.h>
 #include <types.h>
 #include <mm.h>
 
@@ -8,20 +10,22 @@
 
 #define PDI(a) (((u32)(a) >> 22) & 0x3FF)
 #define PTI(a) (((u32)(a) >> 12) & 0x3FF)
-#define PTE_ADDR(pte) ((u32)(pte) & ~0xFFF)
-#define PTE_FLAGS(pte) ((u32)(pte) &  0xFFF)
+#define PTE_ADDR(pte) ((pte) & ~0xFFF)
 
-u32 *kernpgdir;
+u32 *pagedir;
 
-static void mappage(void *virt, void *phys, int perm)
+extern char data[];
+extern char kend[];
+
+static void mappage(void *virt, u32 phys, int perm)
 {
     u32 *pde;
     u32 *pt;
 
-    pde = &kernpgdir[PDI(virt)];
+    pde = &pagedir[PDI(virt)];
 
     if (*pde & PTE_P) {
-        pt = (u32*)P2V(PTE_ADDR(*pde));
+        pt = P2V(PTE_ADDR(*pde));
     }
     else {
         pt = kalloc();
@@ -29,21 +33,28 @@ static void mappage(void *virt, void *phys, int perm)
         *pde = V2P(pt) | PTE_U | PTE_W | PTE_P;
     }
 
-    pt[PTI(virt)] = (u32)virt | perm | PTE_P;
+    pt[PTI(virt)] = phys | perm;
 }
 
-static void maprange(void *virt, void *phys, size_t size, int perm)
+static void maprange(void *virt, u32 phys, size_t size, int perm)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < size; i += 4096)
-        mappage((char*)virt + i, (char*)phys + i, perm);
+        mappage((char*)virt + i, phys + i, perm);
 }
 
 void kvminit()
 {
-    kernpgdir = kalloc();
-    memset(kernpgdir, 0, 4096);
+    pagedir = kalloc();
+    memset(pagedir, 0, 4096);
+
+    maprange((void*)KVADDR,     KPADDR,     (u32)data - KVADDR,     PTE_P);
+    maprange((void*)data,       V2P(data),  PHYSTOP - (u32)kend,    PTE_W | PTE_P);
+    maprange((void*)IOSPACE,    IOSPACE,    IOLENGTH,               PTE_W | PTE_P);
+    maprange((void*)DEVSPACE,   DEVSPACE,   DEVLENGTH,              PTE_W | PTE_P);
+
+    mappage((void*)0, 0, 0);
+
+    lcr3(V2P(pagedir));
 }
-
-

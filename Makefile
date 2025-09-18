@@ -3,7 +3,7 @@ CFLAGS	= -ffreestanding -O2 -Wall -Wextra -I.
 LDFLAGS	= -ffreestanding -O2 -nostdlib -lgcc
 KERNEL	= ttyos
 
-OBJECTS = entry.o main.o uart.o mm.o spinlock.o printk.o vsnprintf.o
+OBJECTS = entry.o main.o uart.o mm.o vm.o spinlock.o printk.o vsnprintf.o
 
 all: $(KERNEL)
 

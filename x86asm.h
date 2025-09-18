@@ -63,4 +63,10 @@ void outl(u16 port, u32 data)
          ,"a"(data));
 }
 
+static inline
+void lcr3(u32 pagedir)
+{
+    asm volatile ("movl %%eax, %%cr3"::"a"(pagedir));
+}
+
 #endif
