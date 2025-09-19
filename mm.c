@@ -34,5 +34,5 @@ void freerange(void *vstart, void *vend)
 
 void mminit1()
 {
-    freerange(kend, (void*)(KVADDR + 0x400000));
+    freerange(kend, P2V(0x400000));
 }

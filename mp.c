@@ -71,8 +71,8 @@ static struct mpstruct *_mpsearch(u32 addr, int len)
 {
     struct mpstruct *p, *e;
 
-    p = (struct mpstruct *)addr;
-    e = (struct mpstruct *)(addr+len);
+    p = (struct mpstruct *)P2V(addr);
+    e = (struct mpstruct *)P2V(addr+len);
 
     for (; p < e; p++) {
         if (memcmp(p->sig, "_MP_", 4) == 0 && mpchecksum(p, sizeof(struct mpstruct)) == 0)
@@ -88,8 +88,8 @@ static struct mpstruct *mpsearch()
     u32 p1;
     u32 p2;
 
-    p1 = (u32)(*(u16*)0x040e) << 4;
-    p2 = (u32)(*(u16*)0x0413) << 10;
+    p1 = (u32)(*(u16*)P2V(0x040e)) << 4;
+    p2 = (u32)(*(u16*)P2V(0x0413)) << 10;
 
     if ((fp = _mpsearch(p1 ?: p2-1024, 1024)))
         return fp;
@@ -107,9 +107,9 @@ static struct mpconf *mpconfig(struct mpstruct **pfp)
     else
         return nullptr;
 
+    panic("conf = 0x%lx, P2V(conf) = %p\n", fp->physaddr, conf);
     if (memcmp(conf->sig, "PCMP", 4) != 0)
         return nullptr;
-    panic("conf = 0x%lx, P2V(conf) = %p\n", fp->physaddr, conf);
 
     if (conf->version != 1 && conf->version != 4)
         return nullptr;
@@ -127,7 +127,7 @@ void mpinit()
     struct mpconf *conf;
 
     if ((conf = mpconfig(&fp)) == nullptr)
-        panic("Expect to run on an SMP");
+        panic("Expect to run on an SMP\n");
 
     printk("fp = %p, conf = %p\n", fp, conf);
 }
