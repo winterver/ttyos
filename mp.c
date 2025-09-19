@@ -1,15 +1,16 @@
+#include <layout.h>
 #include <types.h>
 #include <string.h>
 #include <printk.h>
 
-struct mpconf;
+// struct mpstruct is under 1MB, while others are not
 
 struct mpstruct {
   u8 sig[4];                // "_MP_"
-  struct mpconf *physaddr;
+  u32 physaddr;             // struct mpconf*, may be higher than 1MB!
   u8 length;                // 1
-  u8 specrev;               // 14
-  u8 checksum;
+  u8 specrev;               // 1 or 4
+  u8 checksum;              // used to make sure all bytes of this struct add up to zero
   u8 type;
   u8 imcrp;
   u8 reserved[3];
@@ -18,7 +19,7 @@ struct mpstruct {
 struct mpconf {
   u8 sig[4];                // "PCMP"
   u16 length;               // total length of the table
-  u8 version;               // 14
+  u8 version;               // 1 or 4
   u8 checksum;
   u8 product[20];
   u32 *oemtable;
@@ -57,7 +58,8 @@ struct mpioapic {
 
 static u8 mpchecksum(void *addr, int len)
 {
-    int i, sum;
+    int i;
+    u8 sum;
 
     for (i = sum = 0; i < len; i++)
         sum += ((u8*)addr)[i];
@@ -95,10 +97,37 @@ static struct mpstruct *mpsearch()
     return _mpsearch(0xf0000, 0x10000);
 }
 
+static struct mpconf *mpconfig(struct mpstruct **pfp)
+{
+    struct mpstruct *fp;
+    struct mpconf *conf;
+
+    if ((fp = mpsearch()) && fp->physaddr)
+        conf = P2V(fp->physaddr);
+    else
+        return nullptr;
+
+    if (memcmp(conf->sig, "PCMP", 4) != 0)
+        return nullptr;
+    panic("conf = 0x%lx, P2V(conf) = %p\n", fp->physaddr, conf);
+
+    if (conf->version != 1 && conf->version != 4)
+        return nullptr;
+
+    if (mpchecksum(conf, conf->length) != 0)
+        return nullptr;
+
+    *pfp = fp;
+    return conf;
+}
+
 void mpinit()
 {
     struct mpstruct *fp;
+    struct mpconf *conf;
 
-    fp = mpsearch();
-    printk("fp = %p\n", fp);
+    if ((conf = mpconfig(&fp)) == nullptr)
+        panic("Expect to run on an SMP");
+
+    printk("fp = %p, conf = %p\n", fp, conf);
 }

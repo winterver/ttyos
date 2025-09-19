@@ -18,7 +18,7 @@ $(KERNEL): link.ld $(OBJECTS)
 	$(CC) -c $< -o $@
 
 run: $(KERNEL)
-	qemu-system-x86_64 -smp $(SMP) -nographic -kernel $(KERNEL)
+	qemu-system-x86_64 -m 256 -smp $(SMP) -nographic -kernel $(KERNEL)
 	@killall -q qemu-system-x86_64 || true
 
 clean:

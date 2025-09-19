@@ -15,7 +15,6 @@
 u32 *pagedir;
 
 extern char data[];
-extern char kend[];
 
 static void mappage(void *virt, u32 phys, int perm)
 {
@@ -50,7 +49,7 @@ void kvminit()
     memset(pagedir, 0, 4096);
 
     maprange((void*)KVADDR,     KPADDR,     (u32)data - KVADDR,     PTE_P);
-    maprange((void*)data,       V2P(data),  PHYSTOP - (u32)kend,    PTE_W | PTE_P);
+    maprange((void*)data,       V2P(data),  PHYSTOP - V2P(data),    PTE_W | PTE_P);
     maprange((void*)IOSPACE,    IOSPACE,    IOLENGTH,               PTE_W | PTE_P);
     maprange((void*)DEVSPACE,   DEVSPACE,   DEVLENGTH,              PTE_W | PTE_P);
 
