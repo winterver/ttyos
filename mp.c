@@ -12,6 +12,52 @@ struct rsdp {
     u32 rsdt;
 } PACKED;
 
+struct sdt {
+    char sig[4];
+    u32 length;
+    u8 revision;
+    u8 checksum;
+    char oemid[6];
+    char oemtid[8];
+    u32 oemrev;
+    u32 creatid;
+    u32 creatrev;
+};
+
+struct rsdt {
+    struct sdt sdt; // sdt.sig = "RSDT"
+    void *others[]; // nelem = (sdt.length - sizeof(sdt))/4
+};
+
+struct madt {
+    struct sdt sdt; // sdt.sig = "APIC", not "ACPI" !
+    u32 lapic;
+    u32 flags;
+};
+
+struct procapic {
+    u8 type;
+    u8 length;
+    u8 acpiid;
+    u8 apicid;
+    u32 flags;
+};
+
+struct ioapic {
+    u8 type;
+    u8 length;
+    u8 apicid;
+    u8 unused;
+    u32 apicaddr;
+    u32 gsintbase;
+};
+
+#define RSDP_SIG "RSD PTR "
+#define RSDT_SIG "RSDT"
+#define MADT_SIG "APIC"
+#define REC_PROCAPIC 0
+#define REC_IOAPIC 1
+
 static u8 checksum(void *addr, int len)
 {
     int i;
@@ -28,7 +74,7 @@ static struct rsdp *_rsdpsearch(u8 *addr, int len)
     u8 *p;
 
     for (p = addr; p < addr+len; p += 16) {
-        if (memcmp(p, "RSD PTR ", 8))
+        if (memcmp(p, RSDP_SIG, 8))
             continue;
         if (checksum(p, sizeof(struct rsdp)))
             continue;
@@ -49,6 +95,12 @@ static struct rsdp *rsdpsearch()
 void mpinit()
 {
     struct rsdp *rsdp;
+    struct rsdt *rsdt;
+    struct madt *madt;
+    struct procapic *proc;
+    struct ioapic *io;
+    int i, n;
+    u8 *p, *e;
 
     if (!(rsdp = rsdpsearch()))
         panic("RSDP not found\n");
@@ -56,5 +108,37 @@ void mpinit()
     if (rsdp->revision != ACPI_1_0)
         panic("ACPI 2.0 not supported\n");
 
-    panic("rsdp = %p, rsdt = %p\n", rsdp, P2V(rsdp->rsdt));
+    rsdt = P2V(rsdp->rsdt);
+    if (checksum(rsdt, rsdt->sdt.length))
+        panic("Invalid RSDT\n");
+
+    n = (rsdt->sdt.length - sizeof(rsdt->sdt)) / 4;
+    for (i = 0; i < n; i++) {
+        p = P2V(rsdt->others[i]);
+        if (memcmp(p, MADT_SIG, 4))
+            continue;
+        madt = (struct madt *)p;
+        break;
+    }
+
+    if (checksum(madt, madt->sdt.length))
+        panic("Invalid MADT\n");
+
+    // TODO: get info from madt
+
+    p = (u8*)(madt+1);
+    e = (u8*)madt + madt->sdt.length;
+
+    for (; p < e; p += p[1]) {
+        switch (*p) {
+        case REC_PROCAPIC:
+            proc = (struct procapic *)p;
+            printk("cpu: acpi = %d, apic = %d\n", proc->acpiid, proc->apicid);
+            break;
+        case REC_IOAPIC:
+            io = (struct ioapic *)p;
+            printk("io: apic = %d, apicaddr = 0x%lx\n", io->apicid, io->apicaddr);
+            break;
+        }
+    }
 }
