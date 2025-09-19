@@ -2,7 +2,7 @@ CC		= i686-elf-gcc
 CFLAGS	= -ffreestanding -O2 -Wall -Wextra -I.
 LDFLAGS	= -ffreestanding -O2 -nostdlib -lgcc
 KERNEL	= ttyos
-SMP 	= 8,cores=1
+SMP 	= 8
 
 OBJECTS = entry.o main.o uart.o mm.o vm.o mp.o spinlock.o printk.o vsnprintf.o
 

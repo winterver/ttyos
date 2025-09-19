@@ -1,4 +1,5 @@
 #include <layout.h>
+#include <printk.h>
 
 struct freepage
 {
@@ -14,6 +15,8 @@ void *kalloc()
     struct freepage *p;
     if ((p = freelist))
         freelist = p->next;
+    if (!p)
+        panic("kalloc(): out of memory\n");
     return p;
 }
 
