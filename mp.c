@@ -35,7 +35,7 @@ struct madt {
     u32 flags;
 };
 
-struct procapic {
+struct proc {
     u8 type;
     u8 length;
     u8 acpiid;
@@ -55,7 +55,7 @@ struct ioapic {
 #define RSDP_SIG "RSD PTR "
 #define RSDT_SIG "RSDT"
 #define MADT_SIG "APIC"
-#define REC_PROCAPIC 0
+#define REC_PROC 0
 #define REC_IOAPIC 1
 
 static u8 checksum(void *addr, int len)
@@ -97,7 +97,7 @@ void mpinit()
     struct rsdp *rsdp;
     struct rsdt *rsdt;
     struct madt *madt;
-    struct procapic *proc;
+    struct proc *proc;
     struct ioapic *io;
     int i, n;
     u8 *p, *e;
@@ -131,8 +131,8 @@ void mpinit()
 
     for (; p < e; p += p[1]) {
         switch (*p) {
-        case REC_PROCAPIC:
-            proc = (struct procapic *)p;
+        case REC_PROC:
+            proc = (struct proc *)p;
             printk("cpu: acpi = %d, apic = %d\n", proc->acpiid, proc->apicid);
             break;
         case REC_IOAPIC:
