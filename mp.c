@@ -2,6 +2,7 @@
 #include <types.h>
 #include <string.h>
 #include <printk.h>
+#include <proc.h>
 
 struct rsdp {
     char sig[8]; // "RSD PTR "
@@ -31,7 +32,7 @@ struct rsdt {
 
 struct madt {
     struct sdt sdt; // sdt.sig = "APIC", not "ACPI" !
-    u32 lapic;
+    u32 *lapic; // in last 32 MB of memory, which is identitily mapped.
     u32 flags;
 };
 
@@ -48,7 +49,7 @@ struct ioapic {
     u8 length;
     u8 apicid;
     u8 unused;
-    u32 apicaddr;
+    u32 *apicaddr; // identitily mapped
     u32 gsintbase;
 };
 
@@ -57,6 +58,9 @@ struct ioapic {
 #define MADT_SIG "APIC"
 #define REC_PROC 0
 #define REC_IOAPIC 1
+
+extern volatile u32 *lapic;
+u8 ioapicid;
 
 static u8 checksum(void *addr, int len)
 {
@@ -123,8 +127,7 @@ void mpinit()
 
     if (checksum(madt, madt->sdt.length))
         panic("Invalid MADT\n");
-
-    // TODO: get info from madt
+    lapic = madt->lapic;
 
     p = (u8*)(madt+1);
     e = (u8*)madt + madt->sdt.length;
@@ -133,12 +136,16 @@ void mpinit()
         switch (*p) {
         case REC_PROC:
             proc = (struct proc *)p;
-            printk("cpu: acpi = %d, apic = %d\n", proc->acpiid, proc->apicid);
+            if (ncpu < MAXCPU)
+                cpus[ncpu++].apicid = proc->apicid;
             break;
         case REC_IOAPIC:
             io = (struct ioapic *)p;
-            printk("io: apic = %d, apicaddr = 0x%lx\n", io->apicid, io->apicaddr);
+            ioapicid = io->apicid;
             break;
         }
     }
+
+    // ACPI systems have no IMCR.
+    // Do nothing.
 }
