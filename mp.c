@@ -59,8 +59,8 @@ struct ioapic {
 #define REC_PROC 0
 #define REC_IOAPIC 1
 
-extern volatile u32 *lapic;
-u8 ioapicid;
+extern u32 *lapic;
+extern u8 ioapicid;
 
 static u8 checksum(void *addr, int len)
 {

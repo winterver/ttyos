@@ -8,6 +8,7 @@ void mpinit();
 void lapicinit();
 void seginit();
 void shut8259a();
+void ioapicinit();
 
 int main(void)
 {
@@ -18,6 +19,7 @@ int main(void)
     lapicinit();
     seginit();
     shut8259a();
+    ioapicinit();
 
     printk("Hello ttyOS!\n");
 }
