@@ -43,7 +43,7 @@ static void maprange(void *virt, u32 phys, size_t size, int perm)
         mappage((char*)virt + i, phys + i, perm);
 }
 
-void kvminit()
+void vminit()
 {
     pagedir = kalloc();
     memset(pagedir, 0, 4096);

@@ -96,6 +96,8 @@ static struct rsdp *rsdpsearch()
         ?: _rsdpsearch(bios, 0x20000);
 }
 
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 void mpinit()
 {
     struct rsdp *rsdp;
@@ -116,6 +118,7 @@ void mpinit()
     if (checksum(rsdt, rsdt->sdt.length))
         panic("Invalid RSDT\n");
 
+    madt = nullptr;
     n = (rsdt->sdt.length - sizeof(rsdt->sdt)) / 4;
     for (i = 0; i < n; i++) {
         p = P2V(rsdt->others[i]);
@@ -125,7 +128,7 @@ void mpinit()
         break;
     }
 
-    if (checksum(madt, madt->sdt.length))
+    if (!madt || checksum(madt, madt->sdt.length))
         panic("Invalid MADT\n");
     lapic = madt->lapic;
 

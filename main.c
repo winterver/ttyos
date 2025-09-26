@@ -1,20 +1,31 @@
 #include <printk.h>
+#include <x86asm.h>
 
 void uartinit();
 void mminit1();
-void kvminit();
+void vminit();
 void mpinit();
 void lapicinit();
 void seginit();
+void shut8259a();
 
 int main(void)
 {
-    uartinit();
-    mminit1(); // physical page allocator
-    kvminit(); // kernel virtual memory
-    mpinit();
+    uartinit();     // init serial ports
+    mminit1();      // physical page allocator
+    vminit();       // virtual memory manager
+    mpinit();       // multi-core support
     lapicinit();
     seginit();
+    shut8259a();
 
     printk("Hello ttyOS!\n");
+}
+
+void shut8259a()
+{
+    const u16 iopic1 = 0x20;
+    const u16 iopic2 = 0xa0;
+    outb(iopic1+1, 0xff);
+    outb(iopic2+1, 0xff);
 }
