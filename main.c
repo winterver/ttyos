@@ -5,6 +5,7 @@ void mminit1();
 void kvminit();
 void mpinit();
 void lapicinit();
+void seginit();
 
 int main(void)
 {
@@ -13,6 +14,7 @@ int main(void)
     kvminit(); // kernel virtual memory
     mpinit();
     lapicinit();
+    seginit();
 
     printk("Hello ttyOS!\n");
 }

@@ -88,3 +88,10 @@ void lapicinit()
   // Enable interrupts on the APIC (but not on the processor).
   lapicw(TPR, 0);
 }
+
+int lapicid()
+{
+    if(!lapic)
+        return 0;
+    return lapic[ID] >> 24;
+}
