@@ -90,7 +90,7 @@ void vminit()
 
     lcr3(V2P(pagedir));
 
-    mminit((u32)kend+size, PHYSTOP-0x100000);
+    mminit(V2P(kend)+size, PHYSTOP-0x100000);
 }
 
 void unmapacpi()
