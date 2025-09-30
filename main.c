@@ -15,7 +15,6 @@ int main(void)
     uartinit();     // init serial ports
     vminit();       // virtual memory manager
     mminit();       // physical memory manager
-    panic("mminit() successful\n");
     mpinit();       // multi-core support
     lapicinit();
     seginit();

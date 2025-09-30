@@ -77,7 +77,15 @@ void vminit()
     maprange((void*)kdata,      V2P(kdata), V2P(kend) - V2P(kdata), PTE_W | PTE_P);
     maprange((void*)DEVSPACE,   DEVSPACE,   DEVLENGTH,              PTE_W | PTE_P);
 
+    // ACPI structures resides in the last MB of physical memory
+    maprange((void*)(VBASE+PHYSTOP-0x100000), PHYSTOP-0x100000, 0x100000, PTE_W | PTE_P);
+
     lcr3(V2P(pagedir));
+}
+
+void unmapacpi()
+{
+    maprange((void*)(VBASE+PHYSTOP-0x100000), 0, 0x100000, 0);
 }
 
 static void *valloc(int pages)

@@ -98,6 +98,8 @@ static struct rsdp *rsdpsearch()
 
 #pragma GCC diagnostic ignored "-Warray-bounds"
 
+void unmapacpi();
+
 void mpinit()
 {
     struct rsdp *rsdp;
@@ -148,6 +150,8 @@ void mpinit()
             break;
         }
     }
+
+    unmapacpi();
 
     // ACPI systems have no IMCR.
     // Do nothing.
