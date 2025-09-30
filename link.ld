@@ -2,7 +2,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x80100000;             /* '. =' sets virtual address */
+    . = 0xC0100000;             /* '. =' sets virtual address */
     .text BLOCK(4K) : AT(1M)    /* AT() sets physical address */
     {
         *(.text .text.*)
