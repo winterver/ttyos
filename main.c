@@ -3,7 +3,6 @@
 
 void uartinit();
 void vminit();
-void mminit();
 void mpinit();
 void lapicinit();
 void seginit();
@@ -13,8 +12,7 @@ void ioapicinit();
 int main(void)
 {
     uartinit();     // init serial ports
-    vminit();       // virtual memory manager
-    mminit();       // physical memory manager
+    vminit();       // memory manager
     mpinit();       // multi-core support
     lapicinit();
     seginit();

@@ -12,8 +12,10 @@
 #define PTI(a) (((u32)(a) >> 12) & 0x3FF)
 #define PTE_ADDR(pte) ((pte) & ~0xFFF)
 
+#define NTBL (1024-(VBASE>>22))
+
 ALIGNED(0x1000) u32 pagedir[1024];
-ALIGNED(0x1000) u32 pagetbl[256][1024];
+ALIGNED(0x1000) u32 pagetbl[NTBL][1024];
 
 u32 virttophys(void *virt)
 {
@@ -40,15 +42,10 @@ void mappage(void *virt, u32 phys, int perm)
 
     pde = &pagedir[PDI(virt)];
 
-    if (*pde & PTE_P) {
+    if (*pde & PTE_P)
         pt = P2V(PTE_ADDR(*pde));
-    }
-    else {
-        //pt = kalloc();
-        //memset(pt, 0, 4096);
-        //*pde = V2P(pt) | PTE_U | PTE_W | PTE_P;
+    else
         panic("attempt to map userspace\n");
-    }
 
     pt[PTI(virt)] = phys | perm;
 }
@@ -63,29 +60,43 @@ static void maprange(void *virt, u32 phys, size_t size, int perm)
 
 static void tblinit()
 {
-    int i;
-    for (i = 0; i < 256; i++)
-        pagedir[i+768] = V2P(pagetbl[i]) | PTE_W | PTE_P;
+    size_t i;
+    for (i = 0; i < NTBL; i++)
+        pagedir[i+1024-NTBL] = V2P(pagetbl[i]) | PTE_W | PTE_P;
 }
+
+void mminit(u32 pstart, u32 pend);
+void pfreerange(u32 pstart, u32 pend);
 
 void vminit()
 {
+    int size;
+
     tblinit();
 
-    maprange((void*)VBASE,      IOSPACE,    IOLENGTH,               PTE_W | PTE_P);
+    maprange((void*)VBASE,      IOSPACE,    IOLENGTH,   PTE_W | PTE_P);
+    maprange((void*)DEVSPACE,   DEVSPACE,   DEVLENGTH,  PTE_W | PTE_P);
+
+    // map text + rodata as readonly
     maprange((void*)KVADDR,     KPADDR,     (u32)kdata - KVADDR,    PTE_P);
-    maprange((void*)kdata,      V2P(kdata), V2P(kend) - V2P(kdata), PTE_W | PTE_P);
-    maprange((void*)DEVSPACE,   DEVSPACE,   DEVLENGTH,              PTE_W | PTE_P);
+
+    // map data + bss + Physical Page Stack(used in mm.c)
+    size = (PHYSTOP - V2P(kend)) / 4096 * 4;
+    size = (size + 4095) & ~4095; // align up 4096 boundary
+    maprange((void*)kdata,      V2P(kdata), V2P(kend) - V2P(kdata) + size, PTE_W | PTE_P);
 
     // ACPI structures resides in the last MB of physical memory
-    maprange((void*)(VBASE+PHYSTOP-0x100000), PHYSTOP-0x100000, 0x100000, PTE_W | PTE_P);
+    maprange(P2V(PHYSTOP-0x100000), PHYSTOP-0x100000, 0x100000, PTE_W | PTE_P);
 
     lcr3(V2P(pagedir));
+
+    mminit((u32)kend+size, PHYSTOP-0x100000);
 }
 
 void unmapacpi()
 {
-    maprange((void*)(VBASE+PHYSTOP-0x100000), 0, 0x100000, 0);
+    maprange(P2V(PHYSTOP-0x100000), 0, 0x100000, 0);
+    pfreerange(PHYSTOP-0x100000, 0x100000);
 }
 
 static void *valloc(int pages)
