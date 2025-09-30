@@ -2,8 +2,8 @@
 #include <x86asm.h>
 
 void uartinit();
-void mminit1();
 void vminit();
+void mminit();
 void mpinit();
 void lapicinit();
 void seginit();
@@ -13,8 +13,9 @@ void ioapicinit();
 int main(void)
 {
     uartinit();     // init serial ports
-    mminit1();      // physical page allocator
     vminit();       // virtual memory manager
+    mminit();       // physical memory manager
+    panic("mminit() successful\n");
     mpinit();       // multi-core support
     lapicinit();
     seginit();

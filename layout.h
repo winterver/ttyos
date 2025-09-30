@@ -18,4 +18,9 @@
 #define ASM_V2P(x) ((x) - VBASE)
 #define ASM_P2V(x) ((x) + VBASE)
 
+#ifdef __STDC_VERSION__
+extern char kdata[];
+extern char kend[];
+#endif
+
 #endif

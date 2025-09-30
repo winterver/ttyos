@@ -13,7 +13,7 @@ SECTIONS
         *(.rodata .rodata.*)
     }
 
-    PROVIDE(data = ALIGN(4K));
+    PROVIDE(kdata = ALIGN(4K));
 
     .data BLOCK(4K) : ALIGN(4K)
     {
