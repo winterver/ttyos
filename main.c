@@ -9,6 +9,8 @@ void lapicinit();
 void seginit();
 void shut8259a();
 void ioapicinit();
+void tvinit();
+void idtinit();
 
 int main(void)
 {
@@ -19,7 +21,10 @@ int main(void)
     seginit();
     shut8259a();
     ioapicinit();
+    tvinit();
+    idtinit();
 
+    asm volatile ("int $0x80");
     printk("Hello ttyOS!\n");
 }
 

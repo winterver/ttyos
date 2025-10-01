@@ -66,9 +66,9 @@ void outl(u16 port, u32 data)
 static inline
 u32 eflags()
 {
-  u32 ret;
-  asm volatile ("pushfl;popl %%eax":"=a"(ret));
-  return ret;
+    u32 ret;
+    asm volatile ("pushfl;popl %%eax":"=a"(ret));
+    return ret;
 }
 
 static inline
@@ -81,9 +81,9 @@ static inline
 void lgdt(u64 *p, size_t size)
 {
     u16 pd[3];
-    p[0] = size-1;
-    p[1] = (u32)p;
-    p[2] = (u32)p >> 16;
+    pd[0] = size-1;
+    pd[1] = (u32)p;
+    pd[2] = (u32)p >> 16;
 
     asm volatile ("lgdt %0"::"m"(pd));
 }
@@ -92,9 +92,9 @@ static inline
 void lidt(u64 *p, size_t size)
 {
     u16 pd[3];
-    p[0] = size-1;
-    p[1] = (u32)p;
-    p[2] = (u32)p >> 16;
+    pd[0] = size-1;
+    pd[1] = (u32)p;
+    pd[2] = (u32)p >> 16;
 
     asm volatile ("lidt %0"::"m"(pd));
 }

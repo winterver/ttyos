@@ -1,6 +1,7 @@
 #include <proc.h>
 #include <printk.h>
 #include <x86asm.h>
+#include <segment.h>
 
 struct cpu cpus[MAXCPU];
 int ncpu;
@@ -42,4 +43,17 @@ void seginit()
     c->gdt[SI_UCODE] = SEG_UCODE;
     c->gdt[SI_UDATA] = SEG_UDATA;
     lgdt(c->gdt, sizeof(c->gdt));
+
+    asm volatile (
+        "movw %0, %%ax      \n\t"
+        "movw %%ax, %%cs    \n\t"
+        "movw %1, %%ax      \n\t"
+        "movw %%ax, %%ss    \n\t"
+        "movw %%ax, %%ds    \n\t"
+        "movw %%ax, %%es    \n\t"
+        "movw %%ax, %%fs    \n\t"
+        "movw %%ax, %%gs    \n\t"
+        ::"i"(SI_KCODE<<3),
+          "i"(SI_KDATA<<3)
+        :"ax");
 }
