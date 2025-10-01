@@ -1,19 +1,48 @@
 #include <types.h>
+#include <printk.h>
 
 static u32 alloc_start;
 static u32 alloc_current;
+static u32 alloc_pfn; // alloc_current aligned down 4096 boundary
 static u32 alloc_end;
 
 void allocinit(u32 vstart, u32 vend)
 {
     alloc_start = vstart;
     alloc_current = vstart;
+    alloc_pfn = vstart;
     alloc_end = vend;
 }
 
+void mappage(void *virt, u32 phys, int perm);
+u32 palloc();
+
 static char *sbrk(int len)
 {
-    return (char*)-1;
+    u32 new_current;
+    u32 new_pfn;
+    u32 ret;
+
+    if (len == 0)
+        return (char*)alloc_current;
+
+    if (len < 0)
+        panic("sbrk() shrink not supported\n");
+
+    new_current = alloc_current + len;
+    new_pfn = new_current & ~4095;
+
+    if (alloc_start == alloc_current)
+        mappage((void*)alloc_start, palloc(), 3);
+
+    for (; (alloc_pfn + 4096) <= new_pfn; alloc_pfn += 4096)
+        mappage((void*)(alloc_pfn + 4096), palloc(), 3);
+
+    ret = alloc_current;
+    alloc_current = new_current;
+    alloc_pfn = new_pfn;
+
+    return (char*)ret;
 }
 
 typedef union header {      /* block header: */
@@ -64,7 +93,7 @@ static header_t *moreunits(unsigned nunits)
         nunits = NALLOC;
 
     cp = sbrk(nunits * sizeof(header_t));
-    if (cp == (char *) -1) /* no space at all */
+    if (cp == (char *)-1) /* no space at all */
         return nullptr;
 
     up = (header_t *)cp;
