@@ -17,6 +17,7 @@
 ALIGNED(0x1000) u32 pagedir[1024];
 ALIGNED(0x1000) u32 pagetbl[NTBL][1024];
 
+/*
 u32 virttophys(void *virt)
 {
     u32 *pde;
@@ -34,6 +35,7 @@ u32 virttophys(void *virt)
 
     return PTE_ADDR(pt[PTI(virt)]);
 }
+*/
 
 void mappage(void *virt, u32 phys, int perm)
 {
@@ -66,6 +68,7 @@ static void tblinit()
 }
 
 void mminit(u32 pstart, u32 pend);
+void allocinit(u32 vstart, u32 vend);
 void pfreerange(u32 pstart, u32 pend);
 
 void vminit()
@@ -91,52 +94,11 @@ void vminit()
     lcr3(V2P(pagedir));
 
     mminit(V2P(kend)+size, PHYSTOP-0x100000);
+    allocinit((u32)kend+size, DEVSPACE);
 }
 
 void unmapacpi()
 {
     maprange(P2V(PHYSTOP-0x100000), 0, 0x100000, 0);
     pfreerange(PHYSTOP-0x100000, PHYSTOP);
-}
-
-static void *valloc(int pages)
-{
-    u32 vstart; // head of found virtual space
-    int cont; // current npages of vstart
-    int i, j;
-
-    cont = 0;
-
-    for (i = 0; i < 256; i++) {
-        for (j = 0; j < 1024; j++) {
-            if (!(pagetbl[i][j] & PTE_P)) {
-                if (cont == 0)
-                    vstart = VBASE + i * 0x400000 + j * 0x1000;
-                cont++;
-            }
-            else {
-                cont = 0;
-            }
-
-            if (cont == pages)
-                return (void*)vstart;
-        }
-    }
-
-    panic("out of virtual space\n");
-}
-
-u32 palloc();
-
-void *kzalloc()
-{
-    void *v;
-    u32 p;
-
-    v = valloc(1);
-    p = palloc();
-    mappage(v, p, PTE_W | PTE_P);
-    memset(v, 0, 4096);
-
-    return v;
 }

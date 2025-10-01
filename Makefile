@@ -4,7 +4,7 @@ LDFLAGS	= -ffreestanding -O2 -nostdlib -lgcc
 KERNEL	= ttyos
 SMP 	= 8
 
-OBJECTS = entry.o main.o uart.o mm.o vm.o mp.o lapic.o proc.o ioapic.o spinlock.o printk.o vsnprintf.o
+OBJECTS = entry.o main.o uart.o mm.o vm.o alloc.o mp.o lapic.o proc.o ioapic.o spinlock.o printk.o vsnprintf.o
 
 all: $(KERNEL)
 

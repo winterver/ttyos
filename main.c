@@ -9,6 +9,8 @@ void seginit();
 void shut8259a();
 void ioapicinit();
 
+void *kr_malloc(unsigned);
+
 int main(void)
 {
     uartinit();     // init serial ports
@@ -19,6 +21,7 @@ int main(void)
     shut8259a();
     ioapicinit();
 
+    printk("kr_malloc(8) = %p\n", kr_malloc(8));
     printk("Hello ttyOS!\n");
 }
 
