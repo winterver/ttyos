@@ -1,4 +1,6 @@
 #include <types.h>
+#include <alloc.h>
+#include <string.h>
 #include <printk.h>
 
 static u32 alloc_start;
@@ -13,6 +15,21 @@ void allocinit(u32 vstart, u32 vend)
     alloc_pfn = vstart;
     alloc_end = vend;
 }
+
+static void *kr_malloc(unsigned);
+static void kr_free(void*);
+
+void *kzalloc(size_t n)
+{
+    return memset(kr_malloc(n), 0, n);
+}
+
+void kfree(void *p)
+{
+    kr_free(p);
+}
+
+// K&R malloc implementation
 
 void mappage(void *virt, u32 phys, int perm);
 u32 palloc();
@@ -59,7 +76,7 @@ static header_t *free;      /* start of free list */
 #define NALLOC   1024       /* minimum #units to request */
 
 /* free:   put block ap in free list */
-void kr_free(void *ap)
+static void kr_free(void *ap)
 {
     header_t *bp, *p;
 
@@ -104,7 +121,7 @@ static header_t *moreunits(unsigned nunits)
 }
 
 /* malloc: general-purpose storage allocator */
-void *kr_malloc(unsigned nbytes)
+static void *kr_malloc(unsigned nbytes)
 {
     header_t *p, *prev;
     unsigned nunits;
