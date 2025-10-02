@@ -62,7 +62,41 @@ void idtinit()
     lidt((u64*)idt, sizeof(idt));
 }
 
-void trap()
+struct trapframe {
+    u32 edi;
+    u32 esi;
+    u32 ebp;
+    u32 _esp;      // useless & ignored
+    u32 ebx;
+    u32 edx;
+    u32 ecx;
+    u32 eax;
+
+    // segment registers are pushed as dwords
+    u32 gs;
+    u32 fs;
+    u32 es;
+    u32 ds;
+
+    u32 trapno;
+
+    u32 err;
+    u32 eip;
+    u32 cs;
+    u32 eflags;
+
+    // only when crossing rings
+    u32 esp;
+    u32 ss;
+};
+
+void trap(struct trapframe *tf)
 {
-    panic("trap!\n");
+    printk("eax: 0x%08lx ebx: 0x%08lx ecx: 0x%08lx edx: 0x%08lx\n", tf->eax, tf->ebx, tf->ecx, tf->edx);
+    printk("esi: 0x%08lx edi: 0x%08lx ebp: 0x%08lx\n", tf->esi, tf->edi, tf->ebp);
+    printk("ds: 0x%04lx es: 0x%04lx fs: 0x%04lx gs: 0x%04lx\n", tf->ds, tf->es, tf->fs, tf->gs);
+    printk("eip: 0x%08lx eflags: 0x%08lx trapno: %ld err: %ld\n", tf->eip, tf->eflags, tf->trapno, tf->err);
+    if (tf->cs != (SI_KCODE<<3)) {
+        printk("cs: 0x%04lx ss: 0x%04lx esp: 0x%08lx\n", tf->cs, tf->ss, tf->esp);
+    }
 }
