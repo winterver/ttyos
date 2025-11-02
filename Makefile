@@ -1,23 +1,13 @@
-CC		= i686-elf-gcc
-CFLAGS	= -ffreestanding -O2 -Wall -Wextra -I. -g
-LDFLAGS	= -ffreestanding -O2 -nostdlib -lgcc
-KERNEL	= ttyos
+KERNEL	= build/ttyos
 SMP 	= 8
-
-OBJECTS = entry.o main.o uart.o mm.o vm.o alloc.o mp.o lapic.o proc.o ioapic.o	\
-		  vectors.o trap.o \
-		  spinlock.o printk.o vsnprintf.o
 
 all: $(KERNEL)
 
-$(KERNEL): link.ld $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(KERNEL) -T link.ld $(OBJECTS)
+$(KERNEL): build
+	cmake --build build
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-%.o: %.S
-	$(CC) $(CFLAGS) -c $< -o $@
+build: CMakeLists.txt
+	cmake -Bbuild
 
 run: $(KERNEL)
 	qemu-system-i386 -m 256 -smp $(SMP) -nographic -kernel $(KERNEL)
@@ -29,4 +19,4 @@ gdb: $(KERNEL)
 	@killall -q qemu-system-i386 || true
 
 clean:
-	rm -f *.o $(KERNEL)
+	make -C build clean
