@@ -7,6 +7,11 @@ set(CMAKE_SYSROOT "/home/winterver/opt/${TARGET}")
 set(CMAKE_C_COMPILER "${CMAKE_SYSROOT}/bin/${TARGET}-gcc")
 set(CMAKE_ASM_COMPILER "${CMAKE_SYSROOT}/bin/${TARGET}-gcc")
 
+include_directories(.)
+link_directories(.)
+add_compile_options(-ffreestanding -Wall -Wextra -Werror -g)
+add_link_options(-Tlink.ld -nostdlib)
+
 add_executable(
     ttyos
 
@@ -40,8 +45,3 @@ add_executable(
     link.ld
     build_toolchain.sh
 )
-
-target_include_directories(ttyos PRIVATE .)
-target_link_directories(ttyos PRIVATE .)
-target_compile_options(ttyos PRIVATE -ffreestanding -Wall -Wextra -Werror -g)
-target_link_options(ttyos PRIVATE -Tlink.ld -nostdlib)
